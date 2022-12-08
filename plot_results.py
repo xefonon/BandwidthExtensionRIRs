@@ -1,29 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from src import PyOctaveBand
+import os.path
+import sys
+sys.path.append('./')
+sys.path.append('./validation_responses')
+# os.chdir('../')
+from PyOctaveBand import PyOctaveBand
 import h5py
-from src.validation_responses.evaluation_metrics import get_eval_metrics
+import matplotlib.patches as mpatches
+from evaluation_metrics import get_eval_metrics
 from scipy import stats
-import pathlib
 from palettable.scientific.sequential import Nuuk_16
-import os
+# from palettable.wesanderson import Zissou_5
+# from palettable.tableau import TableauMedium_10
 
 n_colors = 4
 colorspace = np.linspace(0.0,.8, n_colors)
 # colorspace = np.linspace(0.0,1., n_colors)
 colors = Nuuk_16.mpl_colormap(colorspace)
-figdir = pathlib.Path('FiguresPaper')
-figdir.mkdir(parents=True, exist_ok=True)
-
-csgmfilepath = pathlib.Path("..", "models", "CSGM", "inference_data")
-hififilepath = pathlib.Path("..", "models", "HiFiGAN", "generated_files")
-seganfilepath = pathlib.Path("..", "models", "SEGAN", "generated_files")
-npzfilecsgm = os.path.join(str(csgmfilepath), 'inference_data.npz')
-npzfilesegan = os.path.join(str(seganfilepath), 'generator_inference_file.npz')
-npzfilehifi = os.path.join(str(hififilepath), 'generator_inference_file.npz')
-npzfilehifiproc = os.path.join(str(hififilepath), 'generator_inference_processed.npz')
-
+figdir = './FiguresPaper'
+if not os.path.exists(figdir):
+    os.makedirs(figdir)
 
 def get_figsize(columnwidth = 246., wf=0.5, hf=(5. ** 0.5 - 1.0) / 2.0, ):
     """Parameters:
@@ -82,7 +80,7 @@ def plot_frf(y_truth, y_pred, label=None, color = None, ax = None):
     if label is None:
         label = 'prediction'
     freq = np.fft.rfftfreq(len(y_truth), d=1 / fs)
-    freq_ind = np.argwhere(freq > 20)[:, 0]
+    freq_ind = np.argwhere(freq > 99)[:, 0]
     fr_truth = np.fft.rfft(y_truth)
     fr_pred = np.fft.rfft(y_pred)
     Y_rec = to_db(fr_pred, norm=True)
@@ -466,6 +464,12 @@ def save_rirs():
             return rir_post
         else:
             return rir
+    csgmfilepath = './CSGM/inference_data'
+    hififilepath = './hifi-extension/generated_files'
+    seganfilepath = './SEGAN/generated_files'
+    npzfilecsgm = csgmfilepath + '/inference_data.npz'
+    npzfilesegan = seganfilepath + '/generator_inference_file.npz'
+    npzfilehifi = hififilepath + '/generator_inference_file.npz'
 
     csgm = np.load(npzfilecsgm, allow_pickle=True)
     hifi = np.load(npzfilehifi, allow_pickle=True)
@@ -491,6 +495,17 @@ def save_rirs():
         csgmrir = preprocess(csgmrir, reference_rir=csgminput)
         seganrir = preprocess(seganrir, reference_rir=csgminput)
         hifirir = preprocess(hifirir, reference_rir=csgminput)
+        # freq = np.fft.rfftfreq(len(hifirir), d=1 / fs)
+        # freq_ind = np.argmin(freq < 550)
+        # hifirir =np.fft.rfft(hifirir)
+        # hifirir = np.concatenate((hifirir[:freq_ind], 0.9*hifirir[freq_ind:]))
+        # freq_ind = np.argmin(freq < 1000)
+        # # fr_hifi =np.fft.rfft(hifi)
+        # hifirir = np.concatenate((hifirir[:freq_ind], 0.85*hifirir[freq_ind:]))
+        # freq_ind = np.argmin(freq < 2500)
+        # # fr_hifi =np.fft.rfft(hifi)
+        # hifirir = np.concatenate((hifirir[:freq_ind], 0.85*hifirir[freq_ind:]))
+        # hifirir = np.fft.irfft(hifirir)
 
         csgminput = preprocess(csgminput, reference_rir=csgminput)
 
@@ -504,28 +519,33 @@ def save_rirs():
     newdict['responses_true'] = np.array(true_RIRs)
     newdict['responses_aliased'] = np.array(input_RIRs)
     newdict['responses_adCSGM'] = np.array(CSGM_RIRs)
-    np.savez(os.path.join(str(csgmfilepath), 'generator_inference_processed'), **newdict)
+    np.savez(csgmfilepath + '/generator_inference_processed', **newdict)
 
     newdict = dict(segan)
     newdict['true_rirs'] = np.array(true_RIRs)
     newdict['input_rirs'] = np.array(input_RIRs)
     newdict['G_rirs'] = np.array(SEGAN_RIRs)
-    # np.savez(seganfilepath + '/generator_inference_processed', **newdict)
-    np.savez(os.path.join(str(seganfilepath), 'generator_inference_processed'), **newdict)
+    np.savez(seganfilepath + '/generator_inference_processed', **newdict)
 
     newdict = dict(csgm)
     newdict['true_rirs'] = np.array(true_RIRs)
     newdict['input_rirs'] = np.array(input_RIRs)
     newdict['G_rirs'] = np.array(HiFi_RIRs)
-    # np.savez(hififilepath + '/generator_inference_processed', **newdict)
-    np.savez(os.path.join(str(hififilepath), 'generator_inference_processed'), **newdict)
+    np.savez(hififilepath + '/generator_inference_processed', **newdict)
+
+
+
+    # freq = np.fft.rfftfreq(csgm, d=1 / fs)
+    # freq_ind = np.argwhere(freq > 500)[:, 0]
+    # fr_truth = np.fft.rfft(y_truth)
+    # fr_pred = np.fft.rfft(y_pred)
 
 
 
 def run_metrics():
-    # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
+    npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
+    npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
+    npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
     # npzfilecsgm = './CSGM/inference_data/inference_data.npz'
     # npzfilesegan = './SEGAN/generated_files/generator_inference_file.npz'
     # npzfilehifi = './hifi-extension/generated_files/generator_inference_file.npz'
@@ -536,16 +556,16 @@ def run_metrics():
 
     get_eval_metrics(csgm['responses_adCSGM'] + 1e-8 * np.random.randn(*csgm['responses_adCSGM'].shape),
                      csgm['responses_true'],
-                     csgm['responses_aliased'], str(csgmfilepath.absolute()))
+                     csgm['responses_aliased'], './CSGM/inference_data')
     get_eval_metrics(hifi['G_rirs'], hifi['true_rirs'],
-                     hifi['input_rirs'], str(hififilepath.absolute()))
+                     hifi['input_rirs'], './hifi-extension/generated_files')
     get_eval_metrics(segan['G_rirs'], segan['true_rirs'],
-                     segan['input_rirs'], str( seganfilepath.absolute()))
+                     segan['input_rirs'], './SEGAN/generated_files')
 
 def get_data():
-    # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
+    npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
+    npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
+    npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
     # npzfilecsgm = './CSGM/inference_data/inference_data.npz'
     # npzfilesegan = './SEGAN/generated_files/generator_inference_file.npz'
     # npzfilehifi = './hifi-extension/generated_files/generator_inference_file.npz'
@@ -556,22 +576,19 @@ def get_data():
     return csgm, hifi, segan
 
 def get_rirs(index=0):
-    # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npzs'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
+    npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
+    npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
+    npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
 
     # npzfilehifi = './hifi-extension/generated_files/generator_inference_file_temp.npz'
 
     # npzfilecsgm = './CSGM/inference_data/inference_data.npz'
     # npzfilesegan = './SEGAN/generated_files/generator_inference_file.npz'
     # npzfilehifi = './hifi-extension/generated_files/generator_inference_file.npz'
-    npzfilecsgm_rir = os.path.join(str(csgmfilepath), 'generator_inference_processed.npz')
-    npzfilesegan_rir = os.path.join(str(seganfilepath), 'generator_inference_processed.npz')
-    npzfilehifi_rir = os.path.join(str(hififilepath), 'generator_inference_processed.npz')
 
-    csgm = np.load(npzfilecsgm_rir, allow_pickle=True)
-    hifi = np.load(npzfilesegan_rir, allow_pickle=True)
-    segan = np.load(npzfilehifi_rir, allow_pickle=True)
+    csgm = np.load(npzfilecsgm, allow_pickle=True)
+    hifi = np.load(npzfilehifi, allow_pickle=True)
+    segan = np.load(npzfilesegan, allow_pickle=True)
 
     return csgm['responses_true'][index], csgm['responses_aliased'][index], csgm['responses_adCSGM'][index], \
            hifi['G_rirs'][index], segan['G_rirs'][index]
@@ -651,7 +668,8 @@ def plot_all_frfs(index=0):
     for line in legend.get_lines():
         line.set_linewidth(4.0)
 
-    fig.supxlabel('Frequency [Hz]', fontsize = 11)
+    # fig.supxlabel('Frequency [Hz]', fontsize = 11)
+    fig.text(0.53, 0.015, 'Frequency [Hz]', fontsize=11, ha='center')
     fig.supylabel('Normalised SPL [dB]', fontsize = 11)
     # fig.tight_layout()
     fig.show()
@@ -801,6 +819,19 @@ def plot_broadband_error_dist(magnitude = True):
 
     fig.savefig(figdir + f'/error_broadband_{figlabel}.pdf' , dpi = 300, bbox_inches='tight',pad_inches = 0)
 
+# %%
+# testlist = [2]
+testlist = [0, 2, 5, 8, 10, 13, 14]
+for ind in testlist:
+    plot_all_rirs(index=ind)
+    # plot_all_frfs(index=ind)
+# save_rirs()
+# run_metrics()
+# plot_broadband_error_dist(magnitude = True)
+
+# %%
+
+# region Description
 # """ Plot fd metrics"""
 def fdmetric(metric, quantity):
     response_numbers = np.arange(0, 15)
@@ -808,19 +839,15 @@ def fdmetric(metric, quantity):
     SEGANdata = []
     HiFidata = []
     CSGMdata = []
-    # npzfilepath = './hifi-extension/generated_files/generator_inference_processed.npz'
-    responseshifi = np.load(npzfilehifiproc, allow_pickle= True)
+    npzfilepath = './hifi-extension/generated_files/generator_inference_processed.npz'
+    responseshifi = np.load(npzfilepath, allow_pickle= True)
     grid_ref = responseshifi['grid_ref']
     r = np.linalg.norm(grid_ref[:2], axis = 0)
 
     for response_number in response_numbers:
-        csgmfilepath
-        h5path1 = os.path.join(str(seganfilepath),f'metrics_inference_{response_number}.h5')
-        h5path2 = os.path.join(str(hififilepath),f'metrics_inference_{response_number}.h5')
-        h5path3 = os.path.join(str(csgmfilepath),f'metrics_inference_{response_number}.h5')
-        # h5path1 = f'./SEGAN/generated_files/metrics_inference_{response_number}.h5'
-        # h5path2 = f'./hifi-extension/generated_files/metrics_inference_{response_number}.h5'
-        # h5path3 = f'./CSGM/inference_data/metrics_inference_{response_number}.h5'
+        h5path1 = f'./SEGAN/generated_files/metrics_inference_{response_number}.h5'
+        h5path2 = f'./hifi-extension/generated_files/metrics_inference_{response_number}.h5'
+        h5path3 = f'./CSGM/inference_data/metrics_inference_{response_number}.h5'
         metrics_SEGAN = config_metrics(h5path1)
         metrics_hifi = config_metrics(h5path2)
         metrics_csgm = config_metrics(h5path3)
@@ -836,3 +863,131 @@ def fdmetric(metric, quantity):
     }
 
     return plot_dict, r
+metric = 'mae'
+quantity = 'mag'
+plot_dict1, r = fdmetric(metric, quantity)
+# metric = 'nmse'
+quantity = 'phase'
+plot_dict2, _ = fdmetric(metric, quantity)
+# fig,ax = plt.subplots(figsize=(width, width/2))
+figsize = plot_settings()
+figsize = plot_settings()
+fig, ax = plt.subplots(2,1, sharex = True, figsize=(1.8*figsize[0], 1.8*figsize[1]))
+ax[0] = plot_freq_position_data(r, plot_dict1, ylabel = 'Magnitude\n MAE [dB]', ax = ax[0])
+ax[1] = plot_freq_position_data(r, plot_dict2, ylabel = 'Phase\n MAE [dB]', ax = ax[1])
+ax[0].set_xlim([0., 13])
+# ax[0].set_ylim([.4, 4])
+# ax[1].set_ylim([1.8, 3])
+handles_1, labels_1 = ax[0].get_legend_handles_labels()
+
+fig.subplots_adjust(wspace=0.05, hspace=0.05)
+
+legend = fig.legend(handles_1, labels_1, bbox_to_anchor=(0., 0.9, 1., .102), loc='lower center',
+                    ncol=4,  borderaxespad=0., handlelength=1, frameon=False)
+fig.supxlabel(r'Distance from array center [m]')
+fig.show()
+# fig.savefig(figdir + f'/frf_mag_phase_distance_error.png', dpi = 300, bbox_inches='tight',pad_inches = 0)
+
+# endregion
+# %%
+# """ Plot td metrics"""
+# metric = 'corr'
+# response = 0
+# response_numbers = np.arange(0, 15)
+# PWdata = []
+# SEGANdata = []
+# HiFidata = []
+# CSGMdata = []
+# # for response_number in response_numbers[response:response + 1]:
+# for response_number in response_numbers:
+#     h5path1 = f'./SEGAN/generated_files/metrics_inference_{response_number}.h5'
+#     h5path2 = f'./hifi-extension/generated_files/metrics_inference_{response_number}.h5'
+#     h5path3 = f'./CSGM/inference_data/metrics_inference_{response_number}.h5'
+#     metrics_SEGAN = config_metrics(h5path1)
+#     metrics_hifi = config_metrics(h5path2)
+#     metrics_csgm = config_metrics(h5path3)
+#     PWdata.append(metrics_hifi[f'td_plwav{metric}'])
+#     SEGANdata.append(metrics_SEGAN[f'td_gan{metric}'], )
+#     HiFidata.append(metrics_hifi[f'td_gan{metric}'])
+#     CSGMdata.append(metrics_csgm[f'td_gan{metric}'])
+#     t = metrics_csgm['time_intervals']
+#
+# plot_dict = {
+#     'PW': np.squeeze(PWdata),
+#     'HiFiGAN': np.squeeze(HiFidata),
+#     'CGAN': np.squeeze(SEGANdata),
+#     'CSGM': np.squeeze(CSGMdata)
+# }
+# # fig,ax = plt.subplots(figsize=(width, width/2))
+# figsize = plot_settings()
+# # fig, ax = plt.subplots(figsize=(width, 3*width / 7))
+# fig, ax = plt.subplots(figsize=figsize)
+# ax = plot_td_corr_data(t, plot_dict, ylabel='Correlation [dB]', switchcolors=True)
+# # ax.set_ylim([5, 50])
+# # ax.set_ylim([-30, -5])
+# ax.set_ylim([0.2, 0.8])
+# ax.set_xlim([0.01, .23])
+# fig.show()
+# fig.savefig(figdir + f'/td_corr_all.png', dpi = 300, bbox_inches='tight',pad_inches = 0)
+
+# %%
+
+""" Plot td metrics"""
+metric = 'mae'
+response_numbers = np.arange(0, 15)
+PWdata = []
+SEGANdata = []
+HiFidata = []
+CSGMdata = []
+_, hifidata, _ = get_data()
+grid_ref = hifidata['grid_ref']
+r = np.linalg.norm(grid_ref[:2], axis=0).round(2)
+r, rind = np.unique(r, return_index= True)
+
+for response_number in response_numbers[rind]:
+    h5path1 = f'./SEGAN/generated_files/metrics_inference_{response_number}.h5'
+    h5path2 = f'./hifi-extension/generated_files/metrics_inference_{response_number}.h5'
+    h5path3 = f'./CSGM/inference_data/metrics_inference_{response_number}.h5'
+    metrics_SEGAN = config_metrics(h5path1)
+    metrics_hifi = config_metrics(h5path2)
+    metrics_csgm = config_metrics(h5path3)
+    PWdata.append(metrics_SEGAN[f'td_plwav{metric}'])
+    SEGANdata.append(metrics_SEGAN[f'td_gan{metric}'] )
+    HiFidata.append(metrics_hifi[f'td_gan{metric}'])
+    CSGMdata.append(metrics_csgm[f'td_gan{metric}'])
+
+plot_dict = {
+    'PW': np.array(PWdata),
+    'CSGM': np.array(CSGMdata),
+    'HiFiGAN': np.array(HiFidata),
+    'CGAN': np.array(SEGANdata)
+}
+plot_settings()
+fsize = get_figsize(wf = 1.2, hf = .7)
+
+# fig,ax = plt.subplots(sharex= True, sharey = True)
+
+fig = plt.figure(figsize = fsize)
+# fig = plt.figure(figsize=(width, 5 * width / 6))
+fig = plot_subplots_box_plot(fig, plot_dict,r)
+# ax.set_xlim(11, 8000)
+colpatches = []
+for ii, key in enumerate(plot_dict.keys()):
+    colpatches.append(mpatches.Patch(color=colors[ii], label=key))
+
+fig.legend(handles=colpatches, bbox_to_anchor=(0.88, 1.001),
+           borderaxespad=0.,
+           handlelength=0.8, handletextpad = 0.3,
+           handleheight = 0.6, columnspacing = 1.,
+           bbox_transform = plt.gcf().transFigure,
+           ncol=4, frameon=False,
+           fontsize = 11)
+# fig.supylabel('MAE [dB]', fontsize = 10, )
+# fig.supxlabel('Distance from array center [m]', fontsize = 10)
+fig.text(0.5, 0.015,'Distance from array center [m]', fontsize = 11,  ha='center')
+fig.text(0.008, 0.45, 'MAE [dB]', fontsize = 11, rotation='vertical')
+fig.tight_layout()
+fig.subplots_adjust(wspace=None, hspace=0.2)
+fig.show()
+# fig.savefig(figdir + f'/td_mae_boxplot.pdf', dpi = 300, bbox_inches='tight',pad_inches = 0)
+# TODO: Use G_2048_segment_Best for HifiGAN

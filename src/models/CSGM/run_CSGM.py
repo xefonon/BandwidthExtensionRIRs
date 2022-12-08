@@ -1,15 +1,15 @@
 import torch
-from CSGM_models import load_generator, CSGM, AdaptiveCSGM
+from src.models.CSGM.CSGM_models import load_generator, CSGM, AdaptiveCSGM
 import click
 import datetime
 import yaml
-from utils import config_from_yaml, plot_rir, plot_frf, normalize
-from utils import find_files
+from src.models.CSGM.utils import config_from_yaml, plot_rir, plot_frf, normalize
+from src.models.CSGM.utils import find_files
 import matplotlib.pyplot as plt
 import numpy as np
-from validation_responses.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
+from src.validation_responses.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
 import os
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import h5py
 
 
@@ -160,19 +160,29 @@ def reconstruct(use_wandb, config_file, checkpoint_dir, adaptive_gan):
               help='Use adaptive GAN after CSGM (latent) optimisation')
 @click.option('--inference_dir', default='inference_data', type=str,
               help='Directory of inferred data')
-def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metrics):
+def inference_command(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metrics):
+    return inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metrics)
+
+def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metrics,
+              validation_dir):
     config = config_from_yaml(config_file)
     run = None
 
     G = load_generator(checkpoint_dir, config)
 
-    valid_true_all, valid_recon_all, grid_ref = find_validation_data(config.validation_dir, return_grid=True)
+    valid_true_all, valid_recon_all, grid_ref = find_validation_data(validation_dir, return_grid=True)
 
     indices = select_responses(valid_true_all, valid_recon_all, grid_ref, return_indices=True)
     valid_true_all = valid_true_all[indices]
     valid_recon_all = valid_recon_all[indices]
-    grid_ref = grid_ref[:, indices]
     total_responses = len(valid_true_all)
+
+    print(80*'-')
+    print(f"Reconstructing a total of {total_responses} RIRs.")
+    print(f"Will perform csgm optimisation for {config.n_z_init} latent variable initialisations.")
+    print(80*'-')
+
+    grid_ref = grid_ref[:, indices]
     # total_responses = 1
     inference_data = {}
     gt = []
@@ -181,6 +191,7 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
     z = []
     adaptcsgm = []
     pbar = tqdm(range(total_responses))
+    pbar.set_description(f"Performing inference for response : { 1}/{total_responses}")
 
     for i in pbar:
         response_true = (normalize(torch.from_numpy(valid_true_all[i])) * 0.95).unsqueeze(0)
@@ -206,54 +217,54 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
 
     if get_metrics:
         N = len(inference_data['responses_true'])
-        pbar2 = tqdm(range(N))
+        with tqdm(range(N), position=0, leave=True, ascii=True) as iterator:
 
-        for i in pbar2:
-            hf = h5py.File(inference_dir + f'/metrics_inference_{i}.h5', 'w')
+            for i in iterator:
+                hf = h5py.File(inference_dir + f'/metrics_inference_{i}.h5', 'w')
 
-            td_metrics_gen, time_intervals = time_metrics(inference_data['responses_adCSGM'][i],
-                                                          inference_data['responses_true'][i],
-                                                          fs=16000, t_0=0, t_end=300e-3)
-            for k in td_metrics_gen.keys():
-                hf['td_gan' + k] = td_metrics_gen[k]
+                td_metrics_gen, time_intervals = time_metrics(inference_data['responses_adCSGM'][i],
+                                                              inference_data['responses_true'][i],
+                                                              fs=16000, t_0=0, t_end=300e-3)
+                for k in td_metrics_gen.keys():
+                    hf['td_gan' + k] = td_metrics_gen[k]
 
-            td_metrics_plwav, _ = time_metrics(inference_data['responses_aliased'][i],
-                                               inference_data['responses_true'][i],
-                                               fs=16000, t_0=0, t_end=300e-3)
-            for k in td_metrics_plwav.keys():
-                hf['td_plwav' + k] = td_metrics_plwav[k]
+                td_metrics_plwav, _ = time_metrics(inference_data['responses_aliased'][i],
+                                                   inference_data['responses_true'][i],
+                                                   fs=16000, t_0=0, t_end=300e-3)
+                for k in td_metrics_plwav.keys():
+                    hf['td_plwav' + k] = td_metrics_plwav[k]
 
-            fd_metrics_gen, freq = freq_metrics(inference_data['responses_adCSGM'][i],
-                                                inference_data['responses_true'][i],
-                                                fs=16000)
-            for k in fd_metrics_gen.keys():
-                hf['fd_gan' + k] = fd_metrics_gen[k]
+                fd_metrics_gen, freq = freq_metrics(inference_data['responses_adCSGM'][i],
+                                                    inference_data['responses_true'][i],
+                                                    fs=16000)
+                for k in fd_metrics_gen.keys():
+                    hf['fd_gan' + k] = fd_metrics_gen[k]
 
-            fd_metrics_plwav, _ = freq_metrics(inference_data['responses_aliased'][i],
-                                               inference_data['responses_true'][i],
-                                               fs=16000, index=i)
-            for k in fd_metrics_plwav.keys():
-                hf['fd_plwav' + k] = fd_metrics_plwav[k]
+                fd_metrics_plwav, _ = freq_metrics(inference_data['responses_aliased'][i],
+                                                   inference_data['responses_true'][i],
+                                                   fs=16000, index=i)
+                for k in fd_metrics_plwav.keys():
+                    hf['fd_plwav' + k] = fd_metrics_plwav[k]
 
-            octave_band_metrics_gen, bands = octave_band_metrics(inference_data['responses_adCSGM'][i],
-                                                                 inference_data['responses_true'][i],
-                                                                 fs=16000)
-            for k in octave_band_metrics_gen.keys():
-                hf['octave_gan' + k] = octave_band_metrics_gen[k]
+                octave_band_metrics_gen, bands = octave_band_metrics(inference_data['responses_adCSGM'][i],
+                                                                     inference_data['responses_true'][i],
+                                                                     fs=16000)
+                for k in octave_band_metrics_gen.keys():
+                    hf['octave_gan' + k] = octave_band_metrics_gen[k]
 
-            octave_band_metrics_plwav, _ = octave_band_metrics(inference_data['responses_aliased'][i],
-                                                               inference_data['responses_true'][i],
-                                                               fs=16000)
+                octave_band_metrics_plwav, _ = octave_band_metrics(inference_data['responses_aliased'][i],
+                                                                   inference_data['responses_true'][i],
+                                                                   fs=16000)
 
-            for k in octave_band_metrics_plwav.keys():
-                hf['octave_plwav' + k] = octave_band_metrics_plwav[k]
+                for k in octave_band_metrics_plwav.keys():
+                    hf['octave_plwav' + k] = octave_band_metrics_plwav[k]
 
-            pbar2.set_description(f"Getting metrics for response : {i + 1}/{N}")
+                iterator.set_postfix_str(f"Getting metrics for response : {i + 1}/{N}")
 
-            hf['time_intervals'] = time_intervals
-            hf['freq'] = freq
-            hf['bands'] = bands
-            hf.close()
+                hf['time_intervals'] = time_intervals
+                hf['freq'] = freq
+                hf['bands'] = bands
+                hf.close()
     np.savez(inference_dir + '/inference_data.npz',
              responses_true=inference_data['responses_true'],
              responses_aliased=inference_data['responses_aliased'],
@@ -265,4 +276,4 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
 
 if __name__ == '__main__':
     # reconstruct()
-    inference()
+    inference_command()

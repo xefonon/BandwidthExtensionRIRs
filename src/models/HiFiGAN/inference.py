@@ -4,23 +4,21 @@ import glob
 import torch
 from librosa.util import normalize
 import numpy as np
-from generator import Generator
-from utils import config_from_yaml
+from src.models.HiFiGAN.generator import Generator
+from src.models.HiFiGAN.utils import config_from_yaml, find_files
 import click
-from utils import find_files
 from pathlib import Path
 from tqdm.contrib import tzip
 import sys
-sys.path.insert(0, "../../")
-from validation_responses.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
+
+sys.path.insert(0, "../")
 import os
-from tqdm import tqdm
 import h5py
+
 device = 'gpu'
 
-'./checkpoints_generator/G_Final_1.0'
 
-def select_responses(ref_responses, rec_responses, grid_ref, return_indices = True):
+def select_responses(ref_responses, rec_responses, grid_ref, return_indices=True):
     hsph = 0.628
     r = np.linalg.norm(grid_ref - np.array([[0., 0., hsph]]).T, axis=0)
     # radii = np.linspace(0.05, 0.7, n_selected)
@@ -33,9 +31,9 @@ def select_responses(ref_responses, rec_responses, grid_ref, return_indices = Tr
     indices = []
     np.random.seed(1234)
     for i, radius in enumerate(radii):
-        prev_radius = radii[i-1] if i > 0 else 1e-18
+        prev_radius = radii[i - 1] if i > 0 else 1e-18
         indx = np.squeeze(
-            np.argwhere((r>prev_radius) & (r<=radius)))
+            np.argwhere((r > prev_radius) & (r <= radius)))
         selected_indx = np.random.choice(indx, 1, replace=False) if len(indx) > 1 else indx
         selected_ref_responses.append(ref_responses[selected_indx])
         selected_rec_responses.append(rec_responses[selected_indx])
@@ -82,22 +80,23 @@ def scan_checkpoint(cp_dir, prefix):
 
 
 def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False):
-    generator = Generator(hp.in_channels, hp.out_channels, num_layers= hp.G_layers,
-                                          num_stacks= hp.num_stacks, residual_channels= hp.residual_channels,
-                                          gate_channels= hp.gate_channels,
-                                          use_spectral_norm=hp.G_use_spectral_norm).to(device).to(device)
+    generator = Generator(hp.in_channels, hp.out_channels, num_layers=hp.G_layers,
+                          num_stacks=hp.num_stacks, residual_channels=hp.residual_channels,
+                          gate_channels=hp.gate_channels,
+                          use_spectral_norm=hp.G_use_spectral_norm).to(device).to(device)
 
-
-    checkpoint_path = checkpoint_dir + '/G_no_adversarial_200000iters'
+    # checkpoint_path = checkpoint_dir + '/G_no_adversarial_200000iters'
+    checkpoint_path = checkpoint_dir + '/g_specialCase'
     state_dict_g = load_checkpoint(checkpoint_path, device)
     generator.load_state_dict(state_dict_g['generator'])
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     generator.eval()
 
-    valid_true_all, valid_recon_all, grid_ref = find_validation_data(validation_dir, return_grid= True) #shape: [709, 16384]
+    valid_true_all, valid_recon_all, grid_ref = find_validation_data(validation_dir,
+                                                                     return_grid=True)  # shape: [709, 16384]
 
-    indices = select_responses(valid_true_all, valid_recon_all, grid_ref,return_indices= True)
+    indices = select_responses(valid_true_all, valid_recon_all, grid_ref, return_indices=True)
     valid_true_all = valid_true_all[indices]
     valid_recon_all = valid_recon_all[indices]
     grid_ref = grid_ref[:, indices]
@@ -128,74 +127,74 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
     true_rirs = np.asarray(true_rirs)
     input_rirs = np.asarray(input_rirs)
     np.savez(output_file,
-             G_rirs = G_rirs,
-             true_rirs = true_rirs,
-             input_rirs =input_rirs,
-             grid_ref = grid_ref,
-             indices = indices)
-    N = len(G_rirs)
-    pbar2 = tqdm(range(N))
-
-    for i in pbar2:
-        hf = h5py.File(output_dir + f'/metrics_inference_{i}.h5', 'w')
-
-        td_metrics_gen, time_intervals = time_metrics(G_rirs[i],
-                                                       true_rirs[i],
-                                                       fs=16000, t_0=0, t_end=300e-3)
-        for k in td_metrics_gen.keys():
-            hf['td_gan'+k]=td_metrics_gen[k]
-
-        td_metrics_plwav, _ = time_metrics(input_rirs[i],
-                                           true_rirs[i],
-                                           fs=16000, t_0=0, t_end=300e-3)
-        for k in td_metrics_plwav.keys():
-            hf['td_plwav'+k]=td_metrics_plwav[k]
-
-        fd_metrics_gen, freq = freq_metrics(G_rirs[i],
-                                             true_rirs[i],
-                                             fs=16000)
-        for k in fd_metrics_gen.keys():
-            hf['fd_gan'+k]=fd_metrics_gen[k]
-
-        fd_metrics_plwav, _ = freq_metrics(input_rirs[i],
-                                           true_rirs[i],
-                                           fs=16000, index=i)
-        for k in fd_metrics_plwav.keys():
-            hf['fd_plwav'+k]=fd_metrics_plwav[k]
-
-        octave_band_metrics_gen, bands = octave_band_metrics(G_rirs[i],
-                                                              true_rirs[i],
-                                                              fs=16000)
-        for k in octave_band_metrics_gen.keys():
-            hf['octave_gan'+k]=octave_band_metrics_gen[k]
-
-        octave_band_metrics_plwav, _ = octave_band_metrics(input_rirs[i],
-                                                           true_rirs[i],
-                                                           fs=16000)
-
-        for k in octave_band_metrics_plwav.keys():
-            hf['octave_plwav'+k]=octave_band_metrics_plwav[k]
-
-        pbar2.set_description(f"Getting metrics for response : {i + 1}/{N}")
-
-        hf['time_intervals'] = time_intervals
-        hf['freq'] = freq
-        hf['bands'] = bands
-        hf.close()
-        # np.savez(output_dir + '/x_axes.npz',
-        #          time_intervals = time_intervals,
-        #          freq = freq,
-        #          bands = bands)
-        # np.savez(output_dir + f'/metrics_gen_{i}.npz',
-        #          td_metrics_gen = td_metrics_gen,
-        #          td_metrics_plwav = td_metrics_plwav,
-        #          fd_metrics_gen = fd_metrics_gen,
-        #          fd_metrics_plwav = fd_metrics_plwav,
-        #          octave_band_metrics_gen = octave_band_metrics_gen,
-        #          octave_band_metrics_plwav = octave_band_metrics_plwav,
-        #          time_intervals= time_intervals,
-        #          freq = freq,
-        #          bands = bands)
+             G_rirs=G_rirs,
+             true_rirs=true_rirs,
+             input_rirs=input_rirs,
+             grid_ref=grid_ref,
+             indices=indices)
+    # N = len(G_rirs)
+    # pbar2 = tqdm(range(N))
+    #
+    # for i in pbar2:
+    #     hf = h5py.File(output_dir + f'/metrics_inference_{i}.h5', 'w')
+    #
+    #     td_metrics_gen, time_intervals = time_metrics(G_rirs[i],
+    #                                                    true_rirs[i],
+    #                                                    fs=16000, t_0=0, t_end=300e-3)
+    #     for k in td_metrics_gen.keys():
+    #         hf['td_gan'+k]=td_metrics_gen[k]
+    #
+    #     td_metrics_plwav, _ = time_metrics(input_rirs[i],
+    #                                        true_rirs[i],
+    #                                        fs=16000, t_0=0, t_end=300e-3)
+    #     for k in td_metrics_plwav.keys():
+    #         hf['td_plwav'+k]=td_metrics_plwav[k]
+    #
+    #     fd_metrics_gen, freq = freq_metrics(G_rirs[i],
+    #                                          true_rirs[i],
+    #                                          fs=16000)
+    #     for k in fd_metrics_gen.keys():
+    #         hf['fd_gan'+k]=fd_metrics_gen[k]
+    #
+    #     fd_metrics_plwav, _ = freq_metrics(input_rirs[i],
+    #                                        true_rirs[i],
+    #                                        fs=16000, index=i)
+    #     for k in fd_metrics_plwav.keys():
+    #         hf['fd_plwav'+k]=fd_metrics_plwav[k]
+    #
+    #     octave_band_metrics_gen, bands = octave_band_metrics(G_rirs[i],
+    #                                                           true_rirs[i],
+    #                                                           fs=16000)
+    #     for k in octave_band_metrics_gen.keys():
+    #         hf['octave_gan'+k]=octave_band_metrics_gen[k]
+    #
+    #     octave_band_metrics_plwav, _ = octave_band_metrics(input_rirs[i],
+    #                                                        true_rirs[i],
+    #                                                        fs=16000)
+    #
+    #     for k in octave_band_metrics_plwav.keys():
+    #         hf['octave_plwav'+k]=octave_band_metrics_plwav[k]
+    #
+    #     pbar2.set_description(f"Getting metrics for response : {i + 1}/{N}")
+    #
+    #     hf['time_intervals'] = time_intervals
+    #     hf['freq'] = freq
+    #     hf['bands'] = bands
+    #     hf.close()
+    # np.savez(output_dir + '/x_axes.npz',
+    #          time_intervals = time_intervals,
+    #          freq = freq,
+    #          bands = bands)
+    # np.savez(output_dir + f'/metrics_gen_{i}.npz',
+    #          td_metrics_gen = td_metrics_gen,
+    #          td_metrics_plwav = td_metrics_plwav,
+    #          fd_metrics_gen = fd_metrics_gen,
+    #          fd_metrics_plwav = fd_metrics_plwav,
+    #          octave_band_metrics_gen = octave_band_metrics_gen,
+    #          octave_band_metrics_plwav = octave_band_metrics_plwav,
+    #          time_intervals= time_intervals,
+    #          freq = freq,
+    #          bands = bands)
 
 
 @click.command()
@@ -206,12 +205,22 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
               help='Directory for saving model checkpoints')
 @click.option('--output_dir', default='./generated_files', type=str,
               help='Directory for saving generator output')
-@click.option('--config_file', default='HiFiGAN_config.yaml', type=str,
+@click.option('--config_file', default='config.yaml', type=str,
               help='Hyper-parameter and network architecture details stored in a .yaml file')
-def main(validation_dir,
-         checkpoint_dir,
-         output_dir,
-         config_file):
+def run_inference_command(validation_dir,
+                          checkpoint_dir,
+                          output_dir,
+                          config_file):
+    return run_inference(validation_dir,
+                         checkpoint_dir,
+                         output_dir,
+                         config_file)
+
+
+def run_inference(validation_dir,
+                  checkpoint_dir,
+                  output_dir,
+                  config_file):
     print('Initializing Inference Process..')
 
     hp = config_from_yaml(config_file)
@@ -224,8 +233,7 @@ def main(validation_dir,
 
 
 if __name__ == '__main__':
-    main()
-
+    run_inference_command()
 
 # name=  '/Users/xen/PhD Acoustics/Repositories/BWextension/hifi-extension/metrics_inference_1.h5'
 # hf1 = h5py.File(name, 'r')

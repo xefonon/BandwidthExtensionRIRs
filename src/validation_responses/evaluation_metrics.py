@@ -1,15 +1,17 @@
 import numpy as np
 from scipy.spatial import distance
-from src.PyOctaveBand import PyOctaveBand
+from src import PyOctaveBand
 from tqdm import tqdm
 import h5py
+import os
 
 def get_eval_metrics(G_rirs, true_rirs, input_rirs, output_dir):
     N = len(G_rirs)
     pbar2 = tqdm(range(N))
 
     for i in pbar2:
-        hf = h5py.File(output_dir + f'/metrics_inference_{i}.h5', 'w')
+        output_path = os.path.join(output_dir, f'metrics_inference_{i}.h5')
+        hf = h5py.File(output_path, 'w')
 
         td_metrics_gen, time_intervals = time_metrics(G_rirs[i],
                                                       true_rirs[i],

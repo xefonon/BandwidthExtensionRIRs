@@ -1,4 +1,18 @@
-name: machine-learning-env
+name: BandwidthExtensionRIRs
 channels:
   - defaults
-prefix: /Users/xen/miniconda3/envs/machine-learning-env
+dependencies:
+  - numpy
+  - matplotlib
+  - h5py
+  - scipy
+  - pytorch
+  - torchvision
+  - tqdm
+  - jupyter
+  - pip:
+    - librosa
+    - torchaudio
+    - palettable
+    - wandb
+prefix: /Users/xen/miniconda3/envs/BandwidthExtensionRIRs

@@ -5,18 +5,16 @@ import os
 import torch
 from librosa.util import normalize
 import numpy as np
-from generator import Generator
+from src.models.SEGAN.SEGAN_plus import Generator
 import wandb
 import click
-from utils import find_files
+from src.models.SEGAN.SEGAN_utils import find_files
 import h5py
 from pathlib import Path
 from tqdm.contrib import tzip
+
 h = None
 device = None
-
-'./checkpoints_generator/g_00680000'
-
 
 
 def validation_responses(file_name):
@@ -27,6 +25,7 @@ def validation_responses(file_name):
         valid_recon = f['reconstructions'][:]
     f.close()
     return valid_true, valid_recon
+
 
 def load_checkpoint(filepath, device):
     # assert os.path.isfile(filepath)
@@ -50,13 +49,12 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
     state_dict_g = load_checkpoint(checkpoint_dir, device)
     generator.load_state_dict(state_dict_g['generator'])
 
-    filelist = find_files(validation_dir,query = '*.hdf5')
-
+    filelist = find_files(validation_dir, query='*.hdf5')
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     generator.eval()
-    #generator.remove_weight_norm()
-    valid_true_all, valid_recon_all = validation_responses(filelist[0]) #shape: [709, 16384]
+    # generator.remove_weight_norm()
+    valid_true_all, valid_recon_all = validation_responses(filelist[0])  # shape: [709, 16384]
 
     true_rirs = []
     input_rirs = []
@@ -85,9 +83,9 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
         output_file = os.path.join(
             output_dir, 'generator_inference.npz')
         np.savez(output_file,
-                 G_rirs = np.asarray(generator_rirs),
-                 true_rirs = np.asarray(true_rirs),
-                 input_rirs = np.asarray(input_rirs))
+                 G_rirs=np.asarray(generator_rirs),
+                 true_rirs=np.asarray(true_rirs),
+                 input_rirs=np.asarray(input_rirs))
         print(output_file)
 
 
@@ -101,10 +99,20 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
               help='Directory for saving generator output')
 @click.option('--config_file', default='HiFiGAN_config.yaml', type=str,
               help='Hyper-parameter and network architecture details stored in a .yaml file')
-def main(validation_dir,
-         checkpoint_dir,
-         output_dir,
-         config_file):
+def run_inference_command(validation_dir,
+                          checkpoint_dir,
+                          output_dir,
+                          config_file):
+    return run_inference(validation_dir,
+                         checkpoint_dir,
+                         output_dir,
+                         config_file)
+
+
+def run_inference(validation_dir,
+                  checkpoint_dir,
+                  output_dir,
+                  config_file):
     print('Initializing Inference Process..')
 
     wandb.init(config=config_file,
@@ -120,4 +128,4 @@ def main(validation_dir,
 
 
 if __name__ == '__main__':
-    main()
+    run_inference_command()

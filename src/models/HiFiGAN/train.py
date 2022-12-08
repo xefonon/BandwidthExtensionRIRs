@@ -16,7 +16,7 @@ from stft_loss import MultiResolutionSTFTLoss
 from torch.nn.parallel import DistributedDataParallel
 import sys
 
-sys.path.insert(0, "../../")
+sys.path.insert(0, "../")
 from PlaneWaveData.TorchDataset import RIRDataset, ValidationDataset, find_files, spectrogram
 from generator import Generator, generator_loss
 from discriminator import (
@@ -263,7 +263,8 @@ def train(rank, train_epochs, train_dir, validation_dir, checkpoint_dir, hp):
             before_loss_mel = sc_loss + mag_loss
 
             # L1 Sample Loss
-            before_loss_sample = F.l1_loss(y, y_generator)
+            # before_loss_sample = F.l1_loss(y, y_generator)
+            before_loss_sample = F.smooth_l1_loss(y, y_generator)
             loss_gen_all = hp.lambda_multiSTFT*before_loss_mel + hp.lambda_time_loss*before_loss_sample
             # pdb.set_trace()
             if y_g_postnet is not None:
@@ -547,7 +548,7 @@ def train(rank, train_epochs, train_dir, validation_dir, checkpoint_dir, hp):
 )
 @click.option(
     "--config_file",
-    default="HiFiGAN_config.yaml",
+    default="config.yaml",
     type=str,
     help="Hyper-parameter and network architecture details stored in a .yaml file",
 )

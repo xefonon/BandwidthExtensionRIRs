@@ -30,3 +30,21 @@ src/models/HiFiGAN/checkpoints_generator/do_00200000
 src/models/HiFiGAN/checkpoints_generator/G_Final_1.0
 
 src/models/HiFiGAN/checkpoints_generator/G_no_adversarial_200000iters
+
+*.xml
+
+*.hdf5
+
+*.iml
+
+*.pyc
+
+src/models/CSGM/Generator_checkpoints/g_00085200
+
+src/models/HiFiGAN/checkpoints_generator/g_00176000
+
+src/models/HiFiGAN/checkpoints_generator/G_2048_segment_Best
+
+src/models/HiFiGAN/checkpoints_generator/g_specialCase
+
+src/models/SEGAN/checkpoints_generator/g_00393000

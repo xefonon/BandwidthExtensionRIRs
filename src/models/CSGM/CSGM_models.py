@@ -1,13 +1,12 @@
 import torch
 import numpy as np
 import sys
-sys.path.insert(0, "../../")
-from WaveGAN.wavegan import *
-from utils import (config_from_yaml, print_training_stats,
+# sys.path.insert(0, "../../")
+from src.models.WaveGAN.wavegan import *
+from src.models.CSGM.utils import (config_from_yaml, print_training_stats,
                    scan_checkpoint, load_checkpoint, save_checkpoint,
                    plot_generated_samples, normalize)
-from icecream import ic
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 cuda = True if torch.cuda.is_available() else False
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -150,7 +149,7 @@ def CSGM(y, G, config, run):
         losses[f'regularisation_{i}'] = []
         losses[f'total_{i}'] = []
 
-        pbar2 = tqdm(range(config.CSGM_iterations))
+        pbar2 = tqdm(range(config.CSGM_iterations), leave=False)
         for step in pbar2:
             optimizer.zero_grad()
             # Gz = normalize(G(Z))*0.95
@@ -182,8 +181,6 @@ def CSGM(y, G, config, run):
             csgm_losses[i] = 10000
         z_init[i:i + 1, :] = Z.detach()
     z_hat_idx = torch.argmin(csgm_losses)
-    ic(csgm_losses)
-    ic(z_hat_idx)
     z_hat = z_init[z_hat_idx:z_hat_idx + 1, :]
     I_CSGM = G(z_hat)
 
@@ -206,7 +203,7 @@ def AdaptiveCSGM(y, G, z_hat, config, run):
     losses['objective'] = []
     losses['regularisation'] = []
     losses['total'] = []
-    pbar1 = tqdm(range(config.adaptive_iters))
+    pbar1 = tqdm(range(config.adaptive_iters), leave=True)
     for step in pbar1:
         optimizer_z.zero_grad()
         optimizer_G.zero_grad()
