@@ -1,0 +1,4 @@
+name: machine-learning-env
+channels:
+  - defaults
+prefix: /Users/xen/miniconda3/envs/machine-learning-env

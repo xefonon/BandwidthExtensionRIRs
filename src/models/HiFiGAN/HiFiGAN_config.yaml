@@ -1,0 +1,183 @@
+seed:
+  desc: Initialise random seed for training
+  value: 1234
+num_gpus:
+  desc: Pretty self-explanatory
+  value: 1
+rep_discriminator:
+  desc: Training repetetitions (steps) of Discriminator networks per generator update
+  value: 2
+discriminator_train_start_steps:
+  desc: How many iterations before discriminator starts to be a part of the pipeline
+  value: 200000
+postnet_start_steps:
+  desc: How many iterations before Generator post-net starts to be a part of the pipeline
+  value: 500000
+num_workers:
+  desc: number of workers for data loader
+  value: 1
+batch_size:
+  desc: Training batch size
+  value: 8
+optimizer:
+  desc: Which optimization algorithm to use (optimizer - e.g. Adam, RMSprop, etc.)
+  value: 'adam'
+
+G_lr:
+  desc: Generator learning rate
+  value: 0.001
+G_opt_beta1:
+  desc: Generator optimizer hparam
+  value: 0.5
+G_opt_beta2:
+  desc: Generator optimizer hparam
+  value: 0.9
+G_lr_decay:
+  desc: Generator optimizer learning rate decay
+  value: 0.999
+
+D_lr:
+  desc: Discriminator learning rate
+  value: 0.0001
+D_opt_beta1:
+  desc: Discriminator optimizer hparam
+  value: 0.5
+D_opt_beta2:
+  desc: Discriminator optimizer hparam
+  value: 0.9
+D_lr_decay:
+  desc: Discriminator optimizer learning rate decay
+  value: 0.999
+
+# Spectrogram hyper-parameters
+n_mel_channels:
+  desc: number of channels (features) used for Mel spectrogram
+  value: 256
+segment_length:
+  desc: Sample size of wavelength
+  value: 4096
+filter_length:
+  desc: NFFT size used for STFT
+  value: 2048
+hop_length:
+  desc: STFT hop length of windows -WARNING- this can't be changed.
+  value: 512
+win_length:
+  desc: STFT window size
+  value: 2048
+sampling_rate:
+  desc: Sample rate of audio input
+  value: 16000
+mel_fmin:
+  desc: Minimum frequency used in Mel frequency bands
+  value: 0.0
+mel_fmax:
+  desc: Maximum frequency used in Mel frequency bands
+  value: 8000.0
+fmax_for_loss:
+  desc: I dont know what this is
+  value: null
+
+# model hyper-parameters
+lambda_feat_match_TF:
+  desc: hyper parameter value (lambda) of feature matching loss for discriminator networks (time-frequency)
+  value: 5.0
+lambda_feat_match_time:
+  desc: hyper parameter value (lambda) of feature matching loss for discriminator networks (time)
+  value: 5.0
+lambda_advers_TF:
+  desc: hyper parameter value (lambda) of TF loss for discriminator networks (TF)
+  value: 5.0
+lambda_advers_time:
+    desc: hyper parameter value (lambda) of time domain loss for discriminator networks (time)
+    value: 5.0
+lambda_multiSTFT:
+  desc: weight for MultiSTFT loss term (pre adversarial training)
+  value: 10.0
+lambda_time_loss:
+  desc: hyper parameter value (lambda) of time-domain mean absolute error loss for generator network
+  value: 20.0
+feat_loss:
+  desc: Whether or not to use feature matching loss in discriminator networks
+  value: True
+out_channels:
+  desc: How many output channels (features) of generator network. E.g. stereo would need 2
+  value: 1
+in_channels:
+  desc: How many input channels (features) of generator network. E.g. stereo would need 2 (32 or 1)
+  value: 1
+G_layers:
+  desc: Number of layers in generator network (total number of layers - G_layers/num_stacks should not be fraction)
+  value: 30
+G_use_spectral_norm:
+  desc: If true, use spectral norm, if false use weight norm, if None, use nothing
+  value: False
+num_stacks:
+  desc: number of wavenet stacks (e.g. ResidualConv1dGLU layers) IN TOTAL ( stacks per layer = num_layers/num_stacks)
+  value: 3
+kernel_size:
+  desc: Size of Conv1d kernel in generator
+  value: 3
+residual_channels:
+  desc: feature map size of residuals convs in generator
+  value: 128
+gate_channels:
+  desc: feature map size of gated channels in generator
+  value: 128
+skip_out_channels:
+  desc: feature map size of skip channels in generator
+  value: 128
+num_D :
+  desc: number of time-domain (multi-period) discriminators?
+  value: 3
+downsampling_factor:
+  desc: how much to downsample in multi-period discriminators (before each new discriminator)
+  value: 2
+disc_out:
+  desc: output size of discriminators (patch-discriminators act on patches of the input)
+  value: 512
+use_mel:
+  desc: whether or not to use mel cepstrum OR STFT instead, False (default) is STFT
+  value: False
+
+# Multi-resolution STFT-loss hyper-parameters
+stft_loss_fft_sizes:
+  desc: FFT sizes of spectrograms
+  value: [1024, 2048, 512, 64]  # List of FFT size for STFT-based loss.
+stft_loss_hop_sizes:
+  desc: Hop size of spectrograms
+  value: [512, 1024, 256, 32]     # List of hop size for STFT-based loss
+stft_loss_win_lengths:
+  desc: Window size of spectrograms
+  value: [1024, 2048, 512, 64]   # List of window length for STFT-based loss.
+stft_loss_window:
+  desc: Window type of spectrograms
+  value: 'hann_window'      # Window function for STFT-based loss
+
+# Loss term weights
+multiSTFTweight:
+  desc: weight for MultiSTFT loss term (pre adversarial training)
+  value: 0.4
+l1_weight:
+  desc: weight for l1 loss term (time domain)
+  value: 2
+
+# logging hyper-parameters
+summary_interval:
+  desc: iterations after which to record a train summary
+  value: 100
+validation_interval:
+  desc: iterations after which to record a take a validation step
+  value: 1000
+save_interval:
+  desc: iterations after which to record a take save checkpoint
+  value: 1000
+chkpt_dir:
+  desc: checkpoint directory
+  value: 'chkpt'
+log_dir:
+  desc: log directory
+  value: 'logs'
+use_ISM_data:
+  desc: use image source method data as well as random wave field
+  value: False

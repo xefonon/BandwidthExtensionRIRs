@@ -1,0 +1,67 @@
+batch_size:
+  desc: Training batch size
+  value: 64
+optimizer:
+  desc: Which optimization algorithm to use (optimizer - e.g. Adam, RMSprop, etc.)
+  value: 'RMSprop'
+lr:
+  desc: Learning rate for optimizers (both D and G)
+  value: 0.00005
+beta1:
+  desc: beta 1 ADAM parameter
+  value: 0.5
+beta2:
+  desc: beta 2 ADAM parameter
+  value: 0.9
+rep_discriminator:
+  desc: Discriminator updates per generator updates
+  value: 1
+model_name:
+  desc: Name of model
+  value: 'SEGAN+'
+G_adv_weight:
+  desc: Weight of adversarial loss (Least-Squares) for generator
+  value: 1
+G_reg_weight:
+  desc: Weight of l1 loss for generator
+  value: 25
+kernel_size:
+  desc: kernel size of convolutional filters for both D and G
+  value: 31
+# Data params
+data_directory:
+  desc: Directory where training data is located
+  value: '../PlaneWaveData/SoundFieldData'
+validation_dir:
+  desc: Directory where validation data is located
+  value: '../validation_responses'
+checkpoint_dir:
+  desc: Directory where model checkpoints are saved
+  value: './SEGAN+'
+rir_length:
+  desc: length of rir waveform signals
+  value: 16384
+nfft:
+  desc: length of discrete fourier transform (number of fft bins)
+  value: 8193
+sample_rate:
+  desc: sample rate of RIR waveforms
+  value: 16000
+num_workers:
+  desc: number of workers for multi-process data loading (number of loader worker processes)
+  value: 2
+validation_interval:
+  desc: Do a validation pass after this many steps
+  value: 100
+loss_type:
+  desc: loss regularization for generator network
+  value: 'L1'
+stride:
+  desc: stride of conv layers
+  value: 2
+use_attention:
+  desc: use attention layers in generator and discriminator
+  value: True
+interp_conv:
+  desc: use nearest neighbour conv
+  value: False

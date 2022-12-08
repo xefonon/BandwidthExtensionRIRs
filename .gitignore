@@ -16,3 +16,17 @@ src/validation_responses/IEC_dataset.h5
 src/validation_responses/IEC_decimated_array_reconstructions.h5
 
 src/validation_responses/rirs_iec_room.h5
+
+src/models/CSGM/Generator_checkpoints/g_final_good_wavegan
+
+*.npz
+
+*.h5
+
+src/models/HiFiGAN/checkpoints_generator/g_00680000
+
+src/models/HiFiGAN/checkpoints_generator/do_00200000
+
+src/models/HiFiGAN/checkpoints_generator/G_Final_1.0
+
+src/models/HiFiGAN/checkpoints_generator/G_no_adversarial_200000iters

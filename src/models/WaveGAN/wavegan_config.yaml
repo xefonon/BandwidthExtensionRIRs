@@ -1,0 +1,50 @@
+batch_size:
+  desc: Training batch size
+  value: 16
+optimizer:
+  desc: Which optimization algorithm to use (optimizer - e.g. Adam, RMSprop, etc.)
+  value: 'adam'
+lr:
+  desc: Learning rate for optimizer
+  value: 0.00005
+beta1:
+  desc: beta 1 ADAM parameter
+  value: 0.5
+beta2:
+  desc: beta 2 ADAM parameter
+  value: 0.9
+latent_dim:
+  desc: dimension of latent variable z (e.g. typically k = 100)
+  value: 128
+discriminator_extra_steps:
+  desc: Discriminator updates per generator updates
+  value: 5
+gradient_penalty_weight:
+  desc: Weight for gradient penalty (WGAN) loss term
+  value: 10.
+model_name:
+  desc: Name of model
+  value: 'WaveGAN_model'
+model_size:
+  desc: Model size (e.g. effective kernel size multiplier 'd') for 16384 samples use model_size = 64
+  value: 64
+n_D_updates:
+  desc: how many discriminator (learning) updates per generator update
+  value: 5
+
+# Data generation params
+data_directory:
+  desc: Directory where training data is located
+  value: './019Data'
+rir_length:
+  desc: Length in samples of rirs
+  value: 16384
+sample_rate:
+  desc: Sampling rate of 'audio' needed to form a uniformly spaced frequency vector
+  value: 16000
+num_workers:
+  desc: tells the data loader instance how many sub-processes to use for data loading
+  value: 1
+sample_size:
+  desc: how many samples to generate with generator network when logging
+  value: 5

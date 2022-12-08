@@ -1,0 +1,60 @@
+regularisor:
+  desc: Norm of prior to use as regularisation for optimisation problem ('masked' or 'whole')
+  value: 'unmasked'
+reg_norm:
+  desc: Order of norm for regularisation
+  value: 'tv'
+model_size:
+  desc: Model size (e.g. effective kernel size multiplier 'd') for 16384 samples use model_size = 64
+  value: 64
+latent_dim:
+  desc: dimension of latent variable z (e.g. typically k = 100)
+  value: 128
+spec_nfft:
+  desc: FFT size for spectrogram operator
+  value: 2048
+sample_rate:
+  desc: Sample rate of waveform
+  value: 16000
+sample_size:
+  desc: Sample size of waveform
+  value: 16384
+n_z_init:
+  desc: number of initialisations for latent variable optimisation
+  value: 10
+lr_z_CSGM:
+  desc: learning rate for latent variable optimisation
+  value: 0.001
+lr_G:
+  desc: learning rate for joint (G,z) variable optimisation
+  value: 0.00005
+CSGM_iterations:
+  desc: number of iterations for latent variable optimisation
+  value: 1500
+adaptive_iters:
+  desc: number of iterations for latent variable optimisation
+  value: 1100
+reg_weight:
+  desc: weight of (norm) regularisation in optimisation problem
+  value: 0.1
+ad_reg_weight:
+  desc: weight of (norm) regularisation in adaptive optimisation problem
+  value: 1
+validation_dir:
+  desc: Directory of validation data
+  value: '../validation_responses'
+model_name:
+  desc: Name used to save logging data
+  value: 'CSGM'
+use_stft:
+  desc: Use STFT as measurement operator
+  value: False
+cut_off:
+  desc: cut_off frequency for partial fft
+  value: 900
+el_net_l1_weight:
+  desc: l1 weight for elastic net regularisation
+  value: 0.01
+el_net_l2_weight:
+  desc: l1 weight for elastic net regularisation
+  value: 0.001
