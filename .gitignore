@@ -1,0 +1,18 @@
+
+data/WaveGAN Data/raw/
+
+data/WaveGAN Data/external/
+
+src/PyOctaveBand/
+
+src/validation_responses/rir_iec_sphere.mat
+
+src/validation_responses/rir_iec_plane.mat
+
+src/validation_responses/IEC_reconstructions.hdf5
+
+src/validation_responses/IEC_dataset.h5
+
+src/validation_responses/IEC_decimated_array_reconstructions.h5
+
+src/validation_responses/rirs_iec_room.h5
