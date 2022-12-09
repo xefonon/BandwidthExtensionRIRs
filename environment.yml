@@ -1,4 +1,4 @@
-name: BandwidthExtensionRIRs
+name: BandwidthExtension
 channels:
   - defaults
 dependencies:
@@ -15,4 +15,4 @@ dependencies:
     - torchaudio
     - palettable
     - wandb
-prefix: /Users/xen/miniconda3/envs/BandwidthExtensionRIRs
+prefix: /Users/xen/miniconda3/envs/BandwidthExtension

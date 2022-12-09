@@ -265,7 +265,11 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
                 hf['freq'] = freq
                 hf['bands'] = bands
                 hf.close()
-    np.savez(inference_dir + '/inference_data.npz',
+
+    output_file = os.path.join(
+        inference_dir, 'inference_data.npz')
+
+    np.savez(output_file,
              responses_true=inference_data['responses_true'],
              responses_aliased=inference_data['responses_aliased'],
              responses_CSGM=inference_data['responses_CSGM'],
@@ -273,6 +277,10 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
              responses_adCSGM=inference_data['responses_adCSGM'],
              grid_ref=inference_data['grid_ref'])
 
+
+    print(80 * '=')
+    print("Inference RIRs saved in path: ", output_file)
+    print(80 * '=')
 
 if __name__ == '__main__':
     # reconstruct()

@@ -65,3 +65,6 @@ use_attention:
 interp_conv:
   desc: use nearest neighbour conv
   value: False
+seed:
+  desc: Initialise random seed for training
+  value: 1234

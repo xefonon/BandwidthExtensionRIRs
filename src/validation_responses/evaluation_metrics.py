@@ -1,40 +1,48 @@
 import numpy as np
 from scipy.spatial import distance
-from src import PyOctaveBand
+from src.PyOctaveBand import PyOctaveBand
 from tqdm import tqdm
 import h5py
+import pathlib
 import os
 
 def get_eval_metrics(G_rirs, true_rirs, input_rirs, output_dir):
     N = len(G_rirs)
     pbar2 = tqdm(range(N))
-
     for i in pbar2:
         output_path = os.path.join(output_dir, f'metrics_inference_{i}.h5')
-        hf = h5py.File(output_path, 'w')
+        hf = h5py.File(output_path, 'r+')
 
         td_metrics_gen, time_intervals = time_metrics(G_rirs[i],
                                                       true_rirs[i],
                                                       fs=16000,resolution = 1e-2, t_0=0, t_end=250e-3)
         for k in td_metrics_gen.keys():
+            if 'td_gan'+k in hf.keys():
+                del hf['td_gan'+k]
             hf['td_gan'+k]=td_metrics_gen[k]
 
         td_metrics_plwav, _ = time_metrics(input_rirs[i],
                                            true_rirs[i],
                                            fs=16000,resolution = 1e-2, t_0=0, t_end=250e-3)
         for k in td_metrics_plwav.keys():
+            if 'td_plwav'+k in hf.keys():
+                del hf['td_plwav'+k]
             hf['td_plwav'+k]=td_metrics_plwav[k]
 
         fd_metrics_gen, freq = freq_metrics(G_rirs[i],
                                             true_rirs[i],
                                             fs=16000)
         for k in fd_metrics_gen.keys():
+            if 'fd_gan'+k in hf.keys():
+                del hf['fd_gan'+k]
             hf['fd_gan'+k]=fd_metrics_gen[k]
 
         fd_metrics_plwav, _ = freq_metrics(input_rirs[i],
                                            true_rirs[i],
                                            fs=16000, index=i)
         for k in fd_metrics_plwav.keys():
+            if 'fd_plwav'+k in hf.keys():
+                del hf['fd_plwav'+k]
             hf['fd_plwav'+k]=fd_metrics_plwav[k]
 
         # octave_band_metrics_gen, bands = octave_band_metrics(G_rirs[i],
@@ -52,7 +60,11 @@ def get_eval_metrics(G_rirs, true_rirs, input_rirs, output_dir):
 
         pbar2.set_description(f"Getting metrics for response : {i + 1}/{N}")
 
+        if 'time_intervals' in hf.keys():
+            del hf['time_intervals']
         hf['time_intervals'] = time_intervals
+        if 'freq' in hf.keys():
+            del hf['freq']
         hf['freq'] = freq
         # hf['bands'] = bands
         hf.close()

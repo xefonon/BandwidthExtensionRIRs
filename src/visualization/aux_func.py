@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from src import PyOctaveBand
+from src.PyOctaveBand import PyOctaveBand
 import h5py
 from src.validation_responses.evaluation_metrics import get_eval_metrics
 from scipy import stats
@@ -23,6 +23,8 @@ npzfilecsgm = os.path.join(str(csgmfilepath), 'inference_data.npz')
 npzfilesegan = os.path.join(str(seganfilepath), 'generator_inference_file.npz')
 npzfilehifi = os.path.join(str(hififilepath), 'generator_inference_file.npz')
 npzfilehifiproc = os.path.join(str(hififilepath), 'generator_inference_processed.npz')
+npzfilecsgmproc = os.path.join(str(csgmfilepath), 'generator_inference_processed.npz')
+npzfileseganproc = os.path.join(str(seganfilepath), 'generator_inference_processed.npz')
 
 
 def get_figsize(columnwidth = 246., wf=0.5, hf=(5. ** 0.5 - 1.0) / 2.0, ):
@@ -59,7 +61,7 @@ def to_db(H_in, norm=False):
     H_db = 20 * np.log10(abs(H_in))
     return H_db
 
-def plot_frf(y_truth, y_pred, label=None, color = None, ax = None):
+def plot_frf(y_truth, y_pred, label=None, color = None, ax = None, normalize = True):
     from matplotlib.ticker import FuncFormatter
     def kilos(x, pos):
         'The two args are the value and tick position'
@@ -85,8 +87,8 @@ def plot_frf(y_truth, y_pred, label=None, color = None, ax = None):
     freq_ind = np.argwhere(freq > 20)[:, 0]
     fr_truth = np.fft.rfft(y_truth)
     fr_pred = np.fft.rfft(y_pred)
-    Y_rec = to_db(fr_pred, norm=True)
-    Y_truth = to_db(fr_truth, norm=True)
+    Y_rec = to_db(fr_pred, norm=normalize)
+    Y_truth = to_db(fr_truth, norm=normalize)
     ax.semilogx(freq[freq_ind], Y_truth[freq_ind], linewidth=1, color='k', label = 'Ground truth')
     ax.semilogx(freq[freq_ind], Y_rec[freq_ind], linewidth=0.5, color=color, label = label)
     formatter = FuncFormatter(kilos)
@@ -146,7 +148,7 @@ def plot_settings(double_width = False):
         factor = 2
         tex_fonts = {
             # Use LaTeX to write all text
-            "text.usetex": True,
+            # "text.usetex": True,
             "font.family": "serif",
             # Use 10pt font in plots, to match 10pt font in document
             "axes.labelsize": 11,
@@ -160,7 +162,7 @@ def plot_settings(double_width = False):
         factor = 1
         tex_fonts = {
             # Use LaTeX to write all text
-            "text.usetex": True,
+            # "text.usetex": True,
             "font.family": "serif",
             # Use 10pt font in plots, to match 10pt font in document
             "axes.labelsize": 10,
@@ -173,7 +175,7 @@ def plot_settings(double_width = False):
         }
         tex_fonts = {
             # Use LaTeX to write all text
-            "text.usetex": True,
+            # "text.usetex": True,
             "font.family": "serif",
             # Use 10pt font in plots, to match 10pt font in document
             "axes.labelsize": 13,
@@ -456,7 +458,7 @@ def save_rirs():
     def preprocess(rir, reference_rir = None):
         rir = normalize(rir)
         freq = np.fft.rfftfreq(len(rir), d=1 / fs)
-        freq_ind = np.argmin(freq < 450)
+        freq_ind = np.argmin(freq < 200)
         if reference_rir is not None:
             reference_rir = normalize(reference_rir)
             fr_in = np.fft.rfft(reference_rir)
@@ -487,11 +489,9 @@ def save_rirs():
         hifirir = hifi['G_rirs'][i]
 
         truerir = preprocess(truerir)
-        # hifiinput = preprocess(hifiinput)
         csgmrir = preprocess(csgmrir, reference_rir=csgminput)
         seganrir = preprocess(seganrir, reference_rir=csgminput)
         hifirir = preprocess(hifirir, reference_rir=csgminput)
-
         csgminput = preprocess(csgminput, reference_rir=csgminput)
 
         true_RIRs.append(truerir)
@@ -504,43 +504,37 @@ def save_rirs():
     newdict['responses_true'] = np.array(true_RIRs)
     newdict['responses_aliased'] = np.array(input_RIRs)
     newdict['responses_adCSGM'] = np.array(CSGM_RIRs)
-    np.savez(os.path.join(str(csgmfilepath), 'generator_inference_processed'), **newdict)
+    np.savez(os.path.join(str(csgmfilepath.absolute()), 'generator_inference_processed'), **newdict)
 
     newdict = dict(segan)
     newdict['true_rirs'] = np.array(true_RIRs)
     newdict['input_rirs'] = np.array(input_RIRs)
     newdict['G_rirs'] = np.array(SEGAN_RIRs)
     # np.savez(seganfilepath + '/generator_inference_processed', **newdict)
-    np.savez(os.path.join(str(seganfilepath), 'generator_inference_processed'), **newdict)
+    np.savez(os.path.join(str(seganfilepath.absolute()), 'generator_inference_processed'), **newdict)
 
     newdict = dict(csgm)
     newdict['true_rirs'] = np.array(true_RIRs)
     newdict['input_rirs'] = np.array(input_RIRs)
     newdict['G_rirs'] = np.array(HiFi_RIRs)
     # np.savez(hififilepath + '/generator_inference_processed', **newdict)
-    np.savez(os.path.join(str(hififilepath), 'generator_inference_processed'), **newdict)
+    np.savez(os.path.join(str(hififilepath.absolute()), 'generator_inference_processed'), **newdict)
 
 
 
 def run_metrics():
-    # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
-    # npzfilecsgm = './CSGM/inference_data/inference_data.npz'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_file.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_file.npz'
 
-    csgm = np.load(npzfilecsgm, allow_pickle=True)
-    hifi = np.load(npzfilehifi, allow_pickle=True)
-    segan = np.load(npzfilesegan, allow_pickle=True)
+    csgm = np.load(npzfilecsgmproc, allow_pickle=True)
+    hifi = np.load(npzfilehifiproc, allow_pickle=True)
+    segan = np.load(npzfileseganproc, allow_pickle=True)
 
     get_eval_metrics(csgm['responses_adCSGM'] + 1e-8 * np.random.randn(*csgm['responses_adCSGM'].shape),
                      csgm['responses_true'],
-                     csgm['responses_aliased'], str(csgmfilepath.absolute()))
+                     csgm['responses_aliased'], str(csgmfilepath))
     get_eval_metrics(hifi['G_rirs'], hifi['true_rirs'],
-                     hifi['input_rirs'], str(hififilepath.absolute()))
+                     hifi['input_rirs'], str(hififilepath))
     get_eval_metrics(segan['G_rirs'], segan['true_rirs'],
-                     segan['input_rirs'], str( seganfilepath.absolute()))
+                     segan['input_rirs'], str(seganfilepath))
 
 def get_data():
     # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npz'
@@ -556,22 +550,10 @@ def get_data():
     return csgm, hifi, segan
 
 def get_rirs(index=0):
-    # npzfilecsgm = './CSGM/inference_data/generator_inference_processed.npzs'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_processed.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_processed.npz'
 
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_file_temp.npz'
-
-    # npzfilecsgm = './CSGM/inference_data/inference_data.npz'
-    # npzfilesegan = './SEGAN/generated_files/generator_inference_file.npz'
-    # npzfilehifi = './hifi-extension/generated_files/generator_inference_file.npz'
-    npzfilecsgm_rir = os.path.join(str(csgmfilepath), 'generator_inference_processed.npz')
-    npzfilesegan_rir = os.path.join(str(seganfilepath), 'generator_inference_processed.npz')
-    npzfilehifi_rir = os.path.join(str(hififilepath), 'generator_inference_processed.npz')
-
-    csgm = np.load(npzfilecsgm_rir, allow_pickle=True)
-    hifi = np.load(npzfilesegan_rir, allow_pickle=True)
-    segan = np.load(npzfilehifi_rir, allow_pickle=True)
+    csgm = np.load(npzfilecsgmproc, allow_pickle=True)
+    hifi = np.load(npzfilehifiproc, allow_pickle=True)
+    segan = np.load(npzfileseganproc, allow_pickle=True)
 
     return csgm['responses_true'][index], csgm['responses_aliased'][index], csgm['responses_adCSGM'][index], \
            hifi['G_rirs'][index], segan['G_rirs'][index]
@@ -621,7 +603,7 @@ def plot_all_rirs(index=0):
     fig.show()
     # fig.savefig(figdir + f'/rirs_pos_{index}_thinLine.pdf', dpi = 300, bbox_inches='tight',pad_inches = 0)
     # fig.savefig(figdir + f'/rirs_pos_{index}.pdf', dpi = 300, bbox_inches='tight',pad_inches = 0)
-def plot_all_frfs(index=0):
+def plot_all_frfs(index=0, normalize = True):
     true_rirs, planewave, csgm, hifi, segan = get_rirs(index = index)
     mosaic = [['pw', 'pw',          'pw'],
               ['csgm', 'csgm',    'csgm'],
@@ -632,10 +614,14 @@ def plot_all_frfs(index=0):
     # allrirs = [planewave, csgm, hifi, segan]
     # fig, ax = plt.subplots(figsize=(width, 3*width / 7))
     fig, ax_dict = plt.subplot_mosaic(mosaic, sharex=True, figsize=(figsize[0], .45*figsize[0]))
-    ax_dict['pw'] = plot_frf(true_rirs, planewave, label = 'PW', color = colors[0], ax = ax_dict['pw'])
-    ax_dict['csgm'] = plot_frf(true_rirs, csgm, label = 'CSGM', color = colors[1], ax = ax_dict['csgm'])
-    ax_dict['hifi'] = plot_frf(true_rirs, hifi, label = 'HiFiGAN', color = colors[2], ax = ax_dict['hifi'])
-    ax_dict['segan'] = plot_frf(true_rirs, segan, label = 'CGAN', color = colors[3], ax = ax_dict['segan'])
+    ax_dict['pw'] = plot_frf(true_rirs, planewave, label = 'PW', color = colors[0],
+                            normalize= normalize, ax = ax_dict['pw'])
+    ax_dict['csgm'] = plot_frf(true_rirs, csgm, label = 'CSGM', color = colors[1],
+                            normalize= normalize, ax = ax_dict['csgm'])
+    ax_dict['hifi'] = plot_frf(true_rirs, hifi, label = 'HiFiGAN', color = colors[2],
+                            normalize= normalize, ax = ax_dict['hifi'])
+    ax_dict['segan'] = plot_frf(true_rirs, segan, label = 'CGAN', color = colors[3],
+                                normalize= normalize, ax = ax_dict['segan'])
     handles_pw, labels_pw = ax_dict['pw'].get_legend_handles_labels()
     handles_csgm, labels_csgm = ax_dict['csgm'].get_legend_handles_labels()
     handles_hifi, labels_hifi = ax_dict['hifi'].get_legend_handles_labels()
@@ -646,7 +632,7 @@ def plot_all_frfs(index=0):
     #            ncol=5, mode="expand", borderaxespad=0., handlelength=1)
     fig.subplots_adjust(wspace=0.05, hspace=0.15)
 
-    legend = fig.legend(handles, labels, bbox_to_anchor=(0., 0.9, 1., .102), loc='lower center',
+    legend = fig.legend(handles, labels, bbox_to_anchor=(0., 0.99, 1.1, .102), loc='lower center',
                         ncol=5,  borderaxespad=0., handlelength=1)
     for line in legend.get_lines():
         line.set_linewidth(4.0)
@@ -793,13 +779,13 @@ def plot_broadband_error_dist(magnitude = True):
     fig.tight_layout()
     fig.subplots_adjust(wspace=None, hspace=0.1)
 
-    fig.show()
     if magnitude:
         figlabel = 'mag'
     else:
         figlabel = 'phase'
+    fig.show()
 
-    fig.savefig(figdir + f'/error_broadband_{figlabel}.pdf' , dpi = 300, bbox_inches='tight',pad_inches = 0)
+    # fig.savefig(figdir + f'/error_broadband_{figlabel}.pdf' , dpi = 300, bbox_inches='tight',pad_inches = 0)
 
 # """ Plot fd metrics"""
 def fdmetric(metric, quantity):

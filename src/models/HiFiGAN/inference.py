@@ -8,7 +8,10 @@ from src.models.HiFiGAN.generator import Generator
 from src.models.HiFiGAN.utils import config_from_yaml, find_files
 import click
 from pathlib import Path
-from tqdm.contrib import tzip
+# from tqdm.contrib import tzip
+from tqdm.notebook import tqdm
+# from fastprogress.fastprogress import master_bar, progress_bar
+
 import sys
 
 sys.path.insert(0, "../")
@@ -103,8 +106,11 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
     true_rirs = []
     input_rirs = []
     generator_rirs = []
+    # pbar = tqdm(zip(valid_true_all, valid_recon_all))
+    pbar = tqdm(zip(valid_true_all, valid_recon_all), total=len(valid_true_all))
+
     with torch.no_grad():
-        for valid_true, valid_recon in tzip(valid_true_all, valid_recon_all):
+        for valid_true, valid_recon in pbar:
             # true_rir = normalize(valid_true) * 0.95
             # recon_rir = normalize(valid_recon) * 0.95
             true_rir = valid_true
@@ -132,69 +138,9 @@ def inference(validation_dir, output_dir, checkpoint_dir, hp, with_postnet=False
              input_rirs=input_rirs,
              grid_ref=grid_ref,
              indices=indices)
-    # N = len(G_rirs)
-    # pbar2 = tqdm(range(N))
-    #
-    # for i in pbar2:
-    #     hf = h5py.File(output_dir + f'/metrics_inference_{i}.h5', 'w')
-    #
-    #     td_metrics_gen, time_intervals = time_metrics(G_rirs[i],
-    #                                                    true_rirs[i],
-    #                                                    fs=16000, t_0=0, t_end=300e-3)
-    #     for k in td_metrics_gen.keys():
-    #         hf['td_gan'+k]=td_metrics_gen[k]
-    #
-    #     td_metrics_plwav, _ = time_metrics(input_rirs[i],
-    #                                        true_rirs[i],
-    #                                        fs=16000, t_0=0, t_end=300e-3)
-    #     for k in td_metrics_plwav.keys():
-    #         hf['td_plwav'+k]=td_metrics_plwav[k]
-    #
-    #     fd_metrics_gen, freq = freq_metrics(G_rirs[i],
-    #                                          true_rirs[i],
-    #                                          fs=16000)
-    #     for k in fd_metrics_gen.keys():
-    #         hf['fd_gan'+k]=fd_metrics_gen[k]
-    #
-    #     fd_metrics_plwav, _ = freq_metrics(input_rirs[i],
-    #                                        true_rirs[i],
-    #                                        fs=16000, index=i)
-    #     for k in fd_metrics_plwav.keys():
-    #         hf['fd_plwav'+k]=fd_metrics_plwav[k]
-    #
-    #     octave_band_metrics_gen, bands = octave_band_metrics(G_rirs[i],
-    #                                                           true_rirs[i],
-    #                                                           fs=16000)
-    #     for k in octave_band_metrics_gen.keys():
-    #         hf['octave_gan'+k]=octave_band_metrics_gen[k]
-    #
-    #     octave_band_metrics_plwav, _ = octave_band_metrics(input_rirs[i],
-    #                                                        true_rirs[i],
-    #                                                        fs=16000)
-    #
-    #     for k in octave_band_metrics_plwav.keys():
-    #         hf['octave_plwav'+k]=octave_band_metrics_plwav[k]
-    #
-    #     pbar2.set_description(f"Getting metrics for response : {i + 1}/{N}")
-    #
-    #     hf['time_intervals'] = time_intervals
-    #     hf['freq'] = freq
-    #     hf['bands'] = bands
-    #     hf.close()
-    # np.savez(output_dir + '/x_axes.npz',
-    #          time_intervals = time_intervals,
-    #          freq = freq,
-    #          bands = bands)
-    # np.savez(output_dir + f'/metrics_gen_{i}.npz',
-    #          td_metrics_gen = td_metrics_gen,
-    #          td_metrics_plwav = td_metrics_plwav,
-    #          fd_metrics_gen = fd_metrics_gen,
-    #          fd_metrics_plwav = fd_metrics_plwav,
-    #          octave_band_metrics_gen = octave_band_metrics_gen,
-    #          octave_band_metrics_plwav = octave_band_metrics_plwav,
-    #          time_intervals= time_intervals,
-    #          freq = freq,
-    #          bands = bands)
+    print(80 * '=')
+    print("Inference RIRs saved in path: ", output_file)
+    print(80 * '=')
 
 
 @click.command()

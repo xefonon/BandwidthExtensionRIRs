@@ -13,7 +13,7 @@ from matplotlib.gridspec import GridSpec
 import re
 import matplotlib as mpl
 from scipy.interpolate import griddata
-
+import pathlib
 def plot_sf(P, x, y, f=None, ax=None, name=None, save=False, add_meas=None,
             clim= None, tex=False):
     N_interp = 1500
@@ -361,8 +361,8 @@ def remove_checkpoint(cp_dir, delete_below_steps = 1000):
             os.remove(os.path.join(cp_dir, f))
 
 def scan_checkpoint(cp_dir, prefix):
-    pattern = os.path.join(cp_dir, prefix + '????????')
-    cp_list = glob.glob(pattern)
+    # cp_list = list(pathlib.Path(cp_dir).glob(prefix + '????????'))
+    cp_list = list(pathlib.Path(cp_dir).glob('*'))
     if len(cp_list) == 0:
         return None
     return sorted(cp_list)[-1]

@@ -48,3 +48,39 @@ src/models/HiFiGAN/checkpoints_generator/G_2048_segment_Best
 src/models/HiFiGAN/checkpoints_generator/g_specialCase
 
 src/models/SEGAN/checkpoints_generator/g_00393000
+
+data/._WaveGAN Data
+
+data/.DS_Store
+
+data/PlaneWaveData/.___pycache__
+
+data/PlaneWaveData/._.DS_Store
+
+data/PlaneWaveData/._sound_field_metadata.txt
+
+data/PlaneWaveData/._SoundFieldData
+
+data/PlaneWaveData/._submit_pw_responses.sh
+
+data/PlaneWaveData/.DS_Store
+
+data/._.DS_Store
+
+data/._Inference Data
+
+data/._PlaneWaveData
+
+data/WaveGAN Data/._.DS_Store
+
+data/WaveGAN Data/._external
+
+data/WaveGAN Data/._processed
+
+data/WaveGAN Data/._raw
+
+data/WaveGAN Data/.DS_Store
+
+src/models/HiFiGAN/checkpoints_generator/._g_00680000
+
+src/models/CSGM/Generator_checkpoints/g_00129000
