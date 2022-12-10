@@ -8,10 +8,11 @@ csgm_checkpoint_path = pathlib.Path("..", "models", "CSGM", "Generator_checkpoin
 test_data_path = pathlib.Path("..", "..", "data", "Inference Data")
 
 urls = [
-  'URLHERE',
-  'URLHERE',
-  'URLHERE',
-  'URLHERE'
+  'https://github.com/xefonon/BandwidthExtensionRIRs/releases/download/files/g_hifigan',
+  'https://github.com/xefonon/BandwidthExtensionRIRs/releases/download/files/g_segan',
+  'https://github.com/xefonon/BandwidthExtensionRIRs/releases/download/files/g_csgm',
+  'https://github.com/xefonon/BandwidthExtensionRIRs/releases/download/files/IEC_reconstructions.hdf5',
+  'https://github.com/xefonon/BandwidthExtensionRIRs/releases/download/files/IEC_dataset.h5'
 ]
 
 Hifi_weights_url = urls[0]
