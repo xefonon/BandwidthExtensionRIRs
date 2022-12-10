@@ -21,4 +21,4 @@
 
 source /work3/xenoka/miniconda3/bin/activate torch_1_9
 
-python train_wavegan.py --use_wandb --epochs 4000 --summary_interval 100 --config_file 'config_2.yaml'
+python train_wavegan.py --use_wandb --epochs 4000 --summary_interval 100 --config_file 'config.yaml'

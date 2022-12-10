@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from src.PyOctaveBand import PyOctaveBand
 import h5py
-from src.validation_responses.evaluation_metrics import get_eval_metrics
+from src.tools.evaluation_metrics import get_eval_metrics
 from scipy import stats
 import pathlib
 from palettable.scientific.sequential import Nuuk_16

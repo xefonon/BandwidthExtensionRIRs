@@ -84,3 +84,11 @@ data/WaveGAN Data/.DS_Store
 src/models/HiFiGAN/checkpoints_generator/._g_00680000
 
 src/models/CSGM/Generator_checkpoints/g_00129000
+
+reports/._figures
+
+src/models/CSGM/Generator_checkpoints/g_csgm
+
+src/models/HiFiGAN/checkpoints_generator/g_hifigan
+
+src/models/SEGAN/checkpoints_generator/g_segan

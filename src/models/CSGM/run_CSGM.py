@@ -7,7 +7,7 @@ from src.models.CSGM.utils import config_from_yaml, plot_rir, plot_frf, normaliz
 from src.models.CSGM.utils import find_files
 import matplotlib.pyplot as plt
 import numpy as np
-from src.validation_responses.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
+from src.tools.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
 import os
 from tqdm.auto import tqdm
 import h5py

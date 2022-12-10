@@ -1,12 +1,12 @@
 Credits
 =======
-
-Project Lead
-----------------
-
-* Xenofon Karakonstantis <xenoka@dtu.dk>
+This project exists as an extension to the experiments undertaken 
+as described in the paper "Generative models for sound field reconstruction".
 
 Project Contributors
 ------------
 
-None.
+* Efren Fernandez-Grande <efgr@dtu.dk>
+* Xenofon Karakonstantis <xenoka@dtu.dk>
+* Diego Caviedes Nozal <dcnozal@jabra.com>
+* Peter Gerstoft <xenoka@dtu.dk>

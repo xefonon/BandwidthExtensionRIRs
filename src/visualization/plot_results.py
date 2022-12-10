@@ -2,11 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os.path
-import sys
 from PyOctaveBand import PyOctaveBand
 import h5py
 import matplotlib.patches as mpatches
-from src.validation_responses.evaluation_metrics import get_eval_metrics
+from src.tools.evaluation_metrics import get_eval_metrics
 from scipy import stats
 from palettable.scientific.sequential import Nuuk_16
 # from palettable.wesanderson import Zissou_5
