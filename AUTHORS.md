@@ -1,7 +1,7 @@
 Credits
 =======
 This project exists as an extension to the experiments undertaken 
-as described in the paper "Generative models for sound field reconstruction".
+as described in the paper "Generative adversarial models for reconstructing room impulse responses".
 
 Project Contributors
 ------------
