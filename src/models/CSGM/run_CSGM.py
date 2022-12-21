@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src.tools.evaluation_metrics import time_metrics, freq_metrics, octave_band_metrics
 import os
-from tqdm.auto import tqdm
+from tqdm.notebook import tqdm
 import h5py
 
 
@@ -190,7 +190,7 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
     csgm = []
     z = []
     adaptcsgm = []
-    pbar = tqdm(range(total_responses))
+    pbar = tqdm(range(total_responses), position=2, leave=True)
     pbar.set_description(f"Performing inference for response : { 1}/{total_responses}")
 
     for i in pbar:
@@ -217,7 +217,7 @@ def inference(config_file, checkpoint_dir, adaptive_gan, inference_dir, get_metr
 
     if get_metrics:
         N = len(inference_data['responses_true'])
-        with tqdm(range(N), position=0, leave=True, ascii=True) as iterator:
+        with tqdm(range(N), position=1, leave=True, ascii=True) as iterator:
 
             for i in iterator:
                 hf = h5py.File(inference_dir + f'/metrics_inference_{i}.h5', 'w')

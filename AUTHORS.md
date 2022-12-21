@@ -9,4 +9,4 @@ Project Contributors
 * Efren Fernandez-Grande <efgr@dtu.dk>
 * Xenofon Karakonstantis <xenoka@dtu.dk>
 * Diego Caviedes Nozal <dcnozal@jabra.com>
-* Peter Gerstoft <xenoka@dtu.dk>
+* Peter Gerstoft <pgerstoft@ucsd.edu>

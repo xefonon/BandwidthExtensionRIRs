@@ -248,3 +248,4 @@ def _downsamplingfactor(freq, fs):
         # Factor between 1<factor<50
         factor[idx] = max(min(factor[idx], 50), 1)
     return factor
+

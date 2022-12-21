@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial import distance
-from src.PyOctaveBand import PyOctaveBand
+import sys
+from src import PyOctaveBand
 from tqdm import tqdm
 import h5py
 import pathlib

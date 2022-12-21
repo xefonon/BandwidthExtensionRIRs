@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from src.PyOctaveBand import PyOctaveBand
+from src import PyOctaveBand
 import h5py
 from src.tools.evaluation_metrics import get_eval_metrics
 from scipy import stats
@@ -84,7 +84,7 @@ def plot_frf(y_truth, y_pred, label=None, color = None, ax = None, normalize = T
     if label is None:
         label = 'prediction'
     freq = np.fft.rfftfreq(len(y_truth), d=1 / fs)
-    freq_ind = np.argwhere(freq > 20)[:, 0]
+    freq_ind = np.argwhere(freq > 100)[:, 0]
     fr_truth = np.fft.rfft(y_truth)
     fr_pred = np.fft.rfft(y_pred)
     Y_rec = to_db(fr_pred, norm=normalize)
