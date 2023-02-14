@@ -29,6 +29,10 @@ Contents
 Usage
 --------------------
 
+To create a conda environment with the required dependencies, run the following command in your terminal:
+
+`conda env create -f environment.yml`
+
 To train the models, you must first generate the synthetic data.
 This can be done by running the following command in the terminal:
 
